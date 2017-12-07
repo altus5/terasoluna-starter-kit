@@ -1,0 +1,4 @@
+# file: deploy.yml
+- hosts: webservers
+  roles:
+    - webapp-deploy

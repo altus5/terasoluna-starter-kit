@@ -1,0 +1,9 @@
+---
+inventory: build
+
+build_user: 'ci'
+
+users:
+  - {user_name: 'ci', user_id: 5010, group_name: 'ci'}
+user_groups:
+  - {group_name: 'ci', group_id: 5010}

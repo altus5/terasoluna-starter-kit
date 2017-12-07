@@ -1,0 +1,14 @@
+---
+# vars file for docker
+
+maven_url: http://ftp.jaist.ac.jp/pub/apache/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz
+jenkins_plugins:
+  - workflow-aggregator
+  - maven-plugin
+  - git
+  - cron_column
+  - ssh
+  - timestamper
+  - jobConfigHistory
+  - next-executions
+

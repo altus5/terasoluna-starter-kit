@@ -1,0 +1,117 @@
+---
+# file: roles/jenkins/tasks/main.yml
+
+- name: "jenkins配置ディレクトリを作成"
+  become: true
+  file: path={{ _jks_dir.path }} owner={{ build_user }} state=directory mode="a+wr"
+  with_items:
+    - {"path":"{{ jenkins_dir }}"}
+    - {"path":"{{ jenkins_dir }}/jenkins_home"}
+  loop_control:
+    loop_var: _jks_dir
+
+- name: "docker-compose.ymlの配置"
+  template:
+    src: "docker-compose.yml"
+    dest: "{{ jenkins_dir }}"
+    owner: "{{ build_user }}"
+    mode: "a+wr"
+
+- name: Create a network
+  docker_network:
+    name: "{{ ci_network_name }}"
+
+- name: "docker-composeを停止"
+  docker_service:
+    project_src: "{{ jenkins_dir }}"
+    state: absent
+
+- name: "jenkins起動"
+  docker_service:
+    project_src: "{{ jenkins_dir }}"
+    state: present
+
+- name: "jenkinsの起動を待っています"
+  shell: "curl -D - --silent --max-time 5 {{ jenkins_url }}cli/"
+  register: result
+  until: (result.stdout.find("403 Forbidden") != -1) or (result.stdout.find("200 OK") != -1) and (result.stdout.find("Please wait while") == -1)
+  retries: "60"
+  delay: "5"
+  changed_when: false
+  check_mode: no
+
+# adminの初期パスワードファイル
+- set_fact:
+    admin_password_file: "{{ jenkins_dir }}/jenkins_home/secrets/initialAdminPassword"
+
+- name: Get Jenkins admin password from file.
+  slurp:
+    src: "{{ admin_password_file }}"
+  register: adminpasswordfile
+
+- name: Set Jenkins admin password fact.
+  set_fact:
+    jenkins_admin_password: "{{ adminpasswordfile['content'] | b64decode | replace('\n', '') }}"
+
+- name: Install Jenkins plugins using password.
+  become: true
+  jenkins_plugin:
+    name: "{{ item }}"
+    jenkins_home: "{{ jenkins_dir }}/jenkins_home"
+    params:
+      url_username: "admin"
+    url_password: "{{ jenkins_admin_password }}"
+    state: present
+    timeout: "60"
+    url: "{{ jenkins_url }}"
+    owner: "{{ build_user }}"
+    group: "{{ build_user }}"
+    mode: "a+wr"
+  with_items: "{{ jenkins_plugins }}"
+
+- name: "jenkins再起動"
+  jenkins_script:
+    script: "Jenkins.instance.safeRestart()"
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    url: "{{ jenkins_url }}"
+    validate_certs: no
+
+- name: "jenkinsの起動を待っています"
+  shell: "curl -D - --silent --max-time 5 {{ jenkins_url }}cli/"
+  register: result
+  until: (result.stdout.find("403 Forbidden") != -1) or (result.stdout.find("200 OK") != -1) and (result.stdout.find("Please wait while") == -1)
+  retries: "60"
+  delay: "5"
+  changed_when: false
+  check_mode: no
+
+- name: "sshキーを作成"
+  become: true
+  stat: path={{ jenkins_dir }}/jenkins_home/.ssh/id_rsa
+  register: sshkey
+# dockerコンテナ外でキーを作成して、コンテナ内のjenkinsユーザー(uid=1000)用にpermissionを整える
+- become: true
+  shell: >
+    mkdir -p {{ jenkins_dir }}/jenkins_home/.ssh;
+    chmod 700 {{ jenkins_dir }}/jenkins_home/.ssh;
+    ssh-keygen -t rsa -f {{ jenkins_dir }}/jenkins_home/.ssh/id_rsa -q -N "";
+    chmod 600 {{ jenkins_dir }}/jenkins_home/.ssh/id_rsa;
+    chown -R 1000:1000 {{ jenkins_dir }}/jenkins_home/.ssh;
+  when: not sshkey.stat.exists
+
+# jenkinsからgitlabにsshキーを登録
+- import_tasks: gitlab_integ.yml
+
+# 認証情報の追加
+- import_tasks: install_credentials.yml
+
+# mavenのインストール
+- import_tasks: install_maven.yml
+
+# ジョブの登録
+- import_tasks: create_job.yml
+
+# ユーザーの作成
+- import_tasks: create_user.yml
+

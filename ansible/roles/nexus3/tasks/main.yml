@@ -1,0 +1,174 @@
+---
+# file: roles/nexus/tasks/main.yml
+
+- name: "nexusのディレクトリー作成"
+  become: true
+  file: path={{ nexus_item.path }} owner={{ nexus_item.owner }} state=directory
+  with_items:
+    - {"path":"{{ nexus_dir }}", "owner":"{{ build_user }}"}
+  loop_control:
+    loop_var: nexus_item
+
+- name: "docker-compose.ymlの配置"
+  template:
+    src: "docker-compose.yml"
+    dest: "{{ nexus_dir }}"
+    owner: "{{ build_user }}"
+    mode: "a+wr"
+
+- name: Create a network
+  docker_network:
+    name: "{{ ci_network_name }}"
+
+- name: "docker-composeを停止"
+  docker_service:
+    project_src: "{{ nexus_dir }}"
+    state: absent
+
+- name: "nexus起動"
+  docker_service:
+    project_src: "{{ nexus_dir }}"
+    state: present
+
+- name: "nexusの起動を待っています"
+  shell: "curl -D - --silent --max-time 5 {{ nexus_external_url }}/"
+  register: result
+  until: (result.stdout.find("200 OK") != -1)
+  retries: "60"
+  delay: "5"
+  changed_when: false
+  check_mode: no
+
+- set_fact:
+    provision: |
+      import org.sonatype.nexus.blobstore.api.BlobStoreManager
+      import org.sonatype.nexus.repository.storage.WritePolicy
+      import org.sonatype.nexus.repository.maven.VersionPolicy
+      import org.sonatype.nexus.repository.maven.LayoutPolicy
+
+      // disable anonymous access 
+      //security.setAnonymousAccess(false)
+
+      // 独自リポジトリ（release版）
+      def createReleasesRepository = {
+        def repoName = '{{ nexus_releases_repository }}'
+        def existingRepo = repository.getRepositoryManager().get(repoName)
+        if (existingRepo == null) {
+          repository.createMavenHosted(repoName,
+            BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+            true, 
+            VersionPolicy.RELEASE,
+            WritePolicy.ALLOW_ONCE,
+            LayoutPolicy.PERMISSIVE)
+        }
+      }
+      createReleasesRepository()
+
+      // 独自リポジトリ（snapshot版）
+      def createSnapshotsRepository = {
+        def repoName = '{{ nexus_snapshots_repository }}'
+        def existingRepo = repository.getRepositoryManager().get(repoName)
+        if (existingRepo == null) {
+          repository.createMavenHosted(repoName,
+            BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+            true, 
+            VersionPolicy.SNAPSHOT,
+            WritePolicy.ALLOW,
+            LayoutPolicy.PERMISSIVE)
+        }
+      }
+      createSnapshotsRepository()
+
+      // terasolunaのリポジトリ（terasoluna-gfw-releases）
+      def createTerasolunaGfwReleasesRepository = {
+        def repoName = 'terasoluna-gfw-releases'
+        def existingRepo = repository.getRepositoryManager().get(repoName)
+        if (existingRepo == null) {
+          repository.createMavenProxy(repoName,
+            'http://repo.terasoluna.org/nexus/content/repositories/terasoluna-gfw-releases/',
+            BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+            true, 
+            VersionPolicy.MIXED,
+            LayoutPolicy.PERMISSIVE)
+        }
+      }
+      createTerasolunaGfwReleasesRepository()
+
+      // terasolunaのリポジトリ（terasoluna-gfw-3rdparty）
+      def createTerasolunaGfw3rdpartyRepository = {
+        def repoName = 'terasoluna-gfw-3rdparty'
+        def existingRepo = repository.getRepositoryManager().get(repoName)
+        if (existingRepo == null) {
+          repository.createMavenProxy(repoName,
+            'http://repo.terasoluna.org/nexus/content/repositories/terasoluna-gfw-3rdparty/',
+            BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+            true, 
+            VersionPolicy.MIXED,
+            LayoutPolicy.PERMISSIVE)
+        }
+      }
+      createTerasolunaGfw3rdpartyRepository()
+
+      // グループ
+      def createPublicRepository = {
+        def repoName = '{{ nexus_group_repository }}'
+        def existingRepo = repository.getRepositoryManager().get(repoName)
+        if (existingRepo == null) {
+          repository.createMavenGroup(repoName,
+            ['{{ nexus_releases_repository }}',
+             '{{ nexus_snapshots_repository }}',
+             'terasoluna-gfw-releases',
+             'terasoluna-gfw-3rdparty',
+             'maven-public'
+            ],
+            BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+        }
+      }
+      createPublicRepository()
+
+      // deploymentユーザーを作成
+      def userName = '{{ nexus_deployment_user }}'
+      def password = '{{ nexus_deployment_password }}'
+      def firstName = 'Deployment'
+      def lastName = 'User'
+      def email = '{{ nexus_deployment_email }}'
+      def adminRole = ['nx-admin']
+      try {
+        user = security.securitySystem.getUser(userName)
+      } catch (org.sonatype.nexus.security.user.UserNotFoundException e) {
+        security.addUser(userName, firstName, lastName, email, true, password, adminRole)
+      }
+
+- name: Removing (potential) previously declared Groovy script {{ item }}
+  uri:
+    url: "{{ nexus_external_url }}/service/siesta/rest/v1/script/provision"
+    user: "{{ nexus_admin }}"
+    password: "{{ nexus_admin_password }}"
+    method: DELETE
+    force_basic_auth: yes
+    status_code: 204,404
+
+- name: Declaring Groovy script {{ item }}
+  uri:
+    url: "{{ nexus_external_url }}/service/siesta/rest/v1/script"
+    user: "{{ nexus_admin }}"
+    password: "{{ nexus_admin_password }}"
+    method: POST
+    force_basic_auth: yes
+    status_code: 204
+    body:
+      name: provision
+      type: groovy
+      content: "{{ provision }}"
+    body_format: json
+
+- name: Calling Groovy script 
+  uri:
+    url: "{{ nexus_external_url }}/service/siesta/rest/v1/script/provision/run"
+    user: "{{ nexus_admin }}"
+    password: "{{ nexus_admin_password }}"
+    headers:
+      Content-Type: "text/plain"
+    method: POST
+    status_code: 200,204
+    force_basic_auth: yes

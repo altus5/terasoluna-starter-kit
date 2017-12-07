@@ -1,0 +1,21 @@
+---
+# file: roles/docker/tasks/amazon.yml
+
+- name: "{{ inventory_hostname }} | Installing ecs-init"
+  yum: name=ecs-init update_cache=yes state=latest
+
+- name: "{{ inventory_hostname }} | Starting and Enabling Docker Service"
+  service: name=docker state=started enabled=yes
+
+- name: "{{ inventory_hostname }} | Adding {{ dockerhost_user }} to Docker group"
+  user: name={{ dockerhost_user }} groups=docker append=yes
+
+- name: "{{ inventory_hostname }} | Installing docker-compose for {{ ansible_system }} on {{ ansible_architecture }}"
+  get_url: url={{ dockerhost_dcurl }} dest=/usr/local/bin/docker-compose mode=0755
+
+- name: "{{ inventory_hostname }} | Adding docker-compose to path for all users"
+  lineinfile: dest=/etc/profile.d/dockercompose.sh state=present create=yes line='export PATH=$PATH:/usr/local/bin'
+
+- name: "{{ inventory_hostname }} | Install pip docker-compose"
+  pip: name=docker-compose
+

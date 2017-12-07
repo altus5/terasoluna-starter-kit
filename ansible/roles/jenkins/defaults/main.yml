@@ -1,0 +1,38 @@
+---
+# vars file for docker
+
+gitlab_private_token: "{{ lookup('env', 'GITLAB_PRIVATE_TOKEN') }}"
+
+jenkins_dir: "{{ '/opt/' + lookup('env', 'PROJECT_GROUP') + '/jenkins' }}"
+
+ci_network_name: "{{ lookup('env', 'PROJECT_GROUP') + '_network' }}"
+
+jenkins_user: jenkins
+jenkins_user_initial_password: jenkins!
+jenkins_user_email:  "{{ lookup('env', 'JENKINS_USER_EMAIL') }}"
+
+gitlab_api_url: "{{ lookup('env', 'GITLAB_URL') }}"
+gitlab_jenkins_user: jenkins
+
+jenkins_host: "{{ lookup('env', 'JENKINS_HOST') }}"
+jenkins_port: "{{ lookup('env', 'JENKINS_PORT') }}"
+jenkins_url: "http://{{ jenkins_host }}:{{ jenkins_port }}/"
+
+nexus_external_host: "{{ lookup('env', 'NEXUS_HOST') }}"
+nexus_external_port: "{{ lookup('env', 'NEXUS_PORT') }}"
+nexus_external_url: "http://{{ nexus_external_host }}:{{ nexus_external_port }}"
+
+nexus_docker_name: nexus
+nexus_docker_port: 8081
+nexus_docker_url: "http://{{ nexus_docker_name }}:{{ nexus_docker_port }}"
+
+nexus_server_id: "{{ lookup('env', 'PROJECT_NAME') + '-nexus' }}"
+nexus_releases_repository: "{{ lookup('env', 'PROJECT_NAME') + '-releases' }}"
+nexus_snapshots_repository: "{{ lookup('env', 'PROJECT_NAME') + '-snapshots' }}"
+nexus_group_repository: "{{ lookup('env', 'PROJECT_NAME') + '-public' }}"
+
+nexus_admin: admin
+nexus_admin_password: admin123
+nexus_deployment_user: deployment
+nexus_deployment_password: deployment123
+nexus_deployment_email: "{{ lookup('env', 'NEXUS_DEPLOYMENT_EMAIL') }}"

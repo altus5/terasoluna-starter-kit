@@ -1,0 +1,44 @@
+---
+# file: roles/jenkins/tasks/create_job.yml
+
+- name: "初期登録用のjobファイルの配置"
+  become: true
+  file: path={{ jenkins_dir }}/jenkins_home/init.jobs owner={{ build_user }} state=directory mode="a+wr"
+
+- template:
+    src: "init.jobs/config.xml"
+    dest: "{{ jenkins_dir }}/jenkins_home/init.jobs/{{ project_code_name }}.xml"
+    owner: "{{ build_user }}"
+    mode: "a+wr"
+
+- set_fact:
+    add_user_script: |
+      import hudson.model.*
+      import hudson.security.*
+      import hudson.tasks.Mailer
+
+      def userId = '{{ jenkins_user }}'
+      def password = '{{ jenkins_user_initial_password }}'
+      def email = '{{ jenkins_user_email }}'
+
+      def instance  = Jenkins.getInstance()
+
+      def existingUser = instance.securityRealm.allUsers.find {it.id == userId}
+
+      if (existingUser == null) {
+        def user = instance.securityRealm.createAccount(userId, password)
+        user.addProperty(new Mailer.UserProperty(email));
+
+        def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+        strategy.setAllowAnonymousRead(false)
+        instance.setAuthorizationStrategy(strategy)
+        instance.save()
+      } 
+
+- name: "ユーザーの作成"
+  jenkins_script:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    url: "{{ jenkins_url }}"
+    validate_certs: no
+    script: "{{ add_user_script }}"

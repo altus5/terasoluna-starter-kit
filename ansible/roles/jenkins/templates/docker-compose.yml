@@ -1,0 +1,18 @@
+version: '2'
+
+services:
+  jenkins:
+    environment:
+      JAVA_OPTS: "-Duser.timezone=Asia/Tokyo -Dorg.apache.commons.jelly.tags.fmt.timeZone=Asia/Tokyo"
+    image: jenkins:2.60.3-alpine
+    container_name: jenkins
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+    ports:
+      - "{{ jenkins_port }}:8080"
+    networks:
+      - {{ ci_network_name }}
+
+networks:
+  {{ ci_network_name }}:
+    external: true

@@ -1,0 +1,42 @@
+---
+# file: roles/jenkins/tasks/install_maven.yml
+
+- name: "mavenのリソースを配置"
+  become: true
+  file: path={{ jenkins_dir }}/jenkins_home/.m2 owner={{ build_user }} state=directory mode="a+wr"
+
+- template:
+    src: "dotm2/settings.xml"
+    dest: "{{ jenkins_dir }}/jenkins_home/.m2/settings.xml"
+    owner: "{{ build_user }}"
+    mode: "a+wr"
+
+- name: "mavenのインストール"
+  jenkins_script:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    url: "{{ jenkins_url }}"
+    validate_certs: no
+    script: |
+      import jenkins.*
+      import jenkins.model.*
+      import hudson.*
+      import hudson.model.*
+
+      mavenName = "MAVEN3"
+      mavenVersion = "3.5.2"
+
+      mavenPlugin = Jenkins.instance.getExtensionList(hudson.tasks.Maven.DescriptorImpl.class)[0];
+      maven3Install = mavenPlugin.installations.find {
+        install -> install.name.equals(mavenName)
+      }
+      if (maven3Install == null) {
+        newMavenInstall = new hudson.tasks.Maven.MavenInstallation(mavenName, null,
+          [new hudson.tools.InstallSourceProperty(
+            [new hudson.tasks.Maven.MavenInstaller(mavenVersion)]
+          )]
+        )
+        mavenPlugin.installations += newMavenInstall
+        mavenPlugin.save()
+      }
+

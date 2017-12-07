@@ -1,0 +1,6 @@
+---
+
+git_remote_repository: git@gitlab.altus-five.com:wasabi/meq.git
+project_code_name: wasabi
+project_group_id: jp.co.future_vision
+project_artifact_id: meq

@@ -1,0 +1,4 @@
+---
+# file: build-servers.yml
+- import_playbook: nexus.yml
+- import_playbook: jenkins.yml

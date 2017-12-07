@@ -1,0 +1,5 @@
+---
+# vars file for docker
+
+dockerhost_dcv: "1.17.0"
+dockerhost_dcurl: "https://github.com/docker/compose/releases/download/{{ dockerhost_dcv }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"

@@ -1,0 +1,8 @@
+# file: nexus
+- hosts: nexus-servers
+  become: yes
+  roles:
+    - userlist
+    - { role: docker, dockerhost_user: "{{ build_user }}" }
+    - buildtools
+    - nexus3

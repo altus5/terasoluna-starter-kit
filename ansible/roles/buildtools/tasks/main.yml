@@ -1,0 +1,12 @@
+---
+# file: roles/userlist/tasks/main.yml
+
+- name: "Installing epel-release"
+  yum: name=epel-release update_cache=yes state=latest
+
+- name: "Installing git,python-pip"
+  yum: name={{ item }} update_cache=yes state=latest
+  with_items:
+    - git
+    - python-pip
+

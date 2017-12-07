@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+
+  <servers>
+    <server>
+     <id>taresoluna-nexus</id>
+     <username>deployment</username>
+     <password>deployment123</password>
+    </server>
+  </servers>
+  
+  <mirrors>
+    <mirror>
+      <id>taresoluna-nexus</id>
+      <mirrorOf>*</mirrorOf>
+      <url>http://{{ NEXUS_HOST }}:{{ NEXUS_PORT }}/repository/{{ PROJECT_NAME }}-public/</url>
+    </mirror>
+  </mirrors>
+
+  <activeProfiles>
+    <activeProfile>taresoluna-nexus</activeProfile>
+  </activeProfiles>
+
+  <profiles>
+    <profile>
+      <id>taresoluna-nexus</id>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+</settings>

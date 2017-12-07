@@ -1,0 +1,36 @@
+---
+# file: roles/jenkins/tasks/main.yml
+
+- fail: msg="gitlab_private_token が不明です。環境変数 GITLAB_PRIVATE_TOKEN にgitlabのPrivate Tokenを設定して ansible-playbook を実行してください。"
+  when: gitlab_private_token is not defined or gitlab_private_token == ''
+
+- fail: msg="gitlab_jenkins_user が不明です。"
+  when: gitlab_jenkins_user is not defined or gitlab_jenkins_user == ''
+
+- fail: msg="gitlab_api_url が不明です。"
+  when: gitlab_api_url is not defined or gitlab_api_url == ''
+
+- name: jekinsユーザーの公開キーを取得
+  become: true
+  slurp:
+    src: "{{ jenkins_dir }}/jenkins_home/.ssh/id_rsa.pub"
+  register: jenkins_rsa_pub_file
+  no_log: True
+
+- set_fact:
+    jenkins_rsa_key: "{{ jenkins_rsa_pub_file['content'] | b64decode | replace('\n', '') }}"
+  no_log: True
+  
+- name: "gitlab にjekinsユーザーの公開キーを登録"
+  become: true
+  uri:
+    url: "{{ gitlab_api_url }}/api/v3/user/keys"
+    method: POST
+    headers:
+      PRIVATE-TOKEN: "{{ gitlab_private_token }}"
+      Content-Type: "application/x-www-form-urlencoded"
+    body: "title={{ gitlab_jenkins_user + '@jekins-server' | urlencode() }}&key={{ jenkins_rsa_key | urlencode() }}"
+    body_format: raw
+    return_content: yes
+  register: result
+  failed_when: "'has already been taken' not in result.content and result.status != 201"

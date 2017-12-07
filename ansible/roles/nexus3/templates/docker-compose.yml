@@ -1,0 +1,23 @@
+version: '2'
+
+services:
+  {{ nexus_docker_name }}:
+    #environment:
+    #  INSTALL4J_ADD_VM_PARAMS: "-Xms300m -Xmx300m -XX:MaxDirectMemorySize=512m"
+    image: sonatype/nexus3:3.6.0
+    container_name: nexus
+    volumes:
+      - nexus-data:/nexus-data
+    ports:
+      - "{{ nexus_external_port }}:{{ nexus_docker_port }}"
+    networks:
+      - {{ ci_network_name }}
+
+networks:
+  {{ ci_network_name }}:
+    external: true
+
+volumes:
+  nexus-data:
+    driver: local
+

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+
+  <servers>
+    <server>
+      <id>{{ nexus_server_id }}</id>
+      <username>{{ nexus_deployment_user }}</username>
+      <password>{{ nexus_deployment_password }}</password>
+    </server>
+  </servers>
+  
+  <mirrors>
+    <mirror>
+      <id>{{ nexus_server_id }}</id>
+      <mirrorOf>*</mirrorOf>
+      <url>{{ nexus_docker_url }}/repository/{{ nexus_group_repository }}/</url>
+    </mirror>
+  </mirrors>
+
+  <activeProfiles>
+    <activeProfile>{{ nexus_server_id }}</activeProfile>
+  </activeProfiles>
+
+  <profiles>
+    <profile>
+      <id>{{ nexus_server_id }}</id>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+</settings>

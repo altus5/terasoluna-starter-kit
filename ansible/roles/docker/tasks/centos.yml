@@ -1,0 +1,46 @@
+---
+# file: roles/docker/tasks/centos.yml
+
+- name: "get-docker.shが既にあるか確認"
+  stat: path=/usr/local/bin/get-docker.sh
+  register: getdocker
+
+- name: "Remove Old Docker"
+  yum: name="{{ module_item }}" update_cache=yes state=absent
+  with_items:
+    - docker
+    - docker-common
+    - docker-selinux
+    - docker-engine
+  loop_control:
+    loop_var: module_item
+  when: not getdocker.stat.exists
+    
+- name: "get convenience script"
+  get_url: url=https://get.docker.com/ dest=/usr/local/bin/get-docker.sh mode=0755
+  when: not getdocker.stat.exists
+
+- name: "Installing Docker"
+  shell: /usr/local/bin/get-docker.sh
+  when: not getdocker.stat.exists
+
+- name: "Starting and Enabling Docker Service"
+  service: name=docker state=started enabled=yes
+
+- name: "Adding {{ dockerhost_user }} to Docker group"
+  user: name={{ dockerhost_user }} groups=docker append=yes
+
+- name: "Installing docker-compose for {{ ansible_system }} on {{ ansible_architecture }}"
+  get_url: url={{ dockerhost_dcurl }} dest=/usr/local/bin/docker-compose mode=0755
+
+- name: "Adding docker-compose to path for all users"
+  lineinfile: dest=/etc/profile.d/dockercompose.sh state=present create=yes line='export PATH=$PATH:/usr/local/bin'
+
+- name: "Installing epel-release"
+  yum: name=epel-release update_cache=yes state=latest
+
+- name: "Installing python-pip"
+  yum: name=python-pip update_cache=yes state=latest
+
+- name: "Install pip docker-compose"
+  pip: name=docker-compose

@@ -1,0 +1,49 @@
+---
+# file: roles/jenkins/tasks/create_job.yml
+
+- name: "初期登録用のjobファイルの配置"
+  become: true
+  file: path={{ jenkins_dir }}/jenkins_home/init.jobs owner={{ build_user }} state=directory mode="a+wr"
+
+- template:
+    src: "init.jobs/config.xml"
+    dest: "{{ jenkins_dir }}/jenkins_home/init.jobs/{{ project_code_name }}.xml"
+    owner: "{{ build_user }}"
+    mode: "a+wr"
+
+- name: "ジョブの作成"
+  jenkins_script:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    url: "{{ jenkins_url }}"
+    validate_certs: no
+    script: |
+      import groovy.io.FileType
+      import jenkins.model.Jenkins
+      import com.cloudbees.plugins.credentials.*
+      import com.cloudbees.jenkins.plugins.sshcredentials.impl.*
+
+      def instance  = Jenkins.getInstance()
+      def credentials = CredentialsProvider.lookupCredentials(
+              BasicSSHUserPrivateKey.class,
+              instance
+          )
+
+      def username = "jenkins"
+      def cred = credentials.findResult {
+        it.username == username ? it : null
+      }
+      assert cred != null, '認証情報が"jenkins"の名前で登録されていません。'
+
+      def dir = new File("/var/jenkins_home/init.jobs")
+      dir.eachFileRecurse (FileType.FILES) { file ->
+        def jobName = file.getName().replaceFirst(/\.xml$/, "")
+        def item = instance.getItemByFullName(jobName)
+        if (item == null) {
+          def configXml = file.text
+          configXml = configXml.replaceAll(/<credentialsId><\/credentialsId>/,"<credentialsId>"+ cred.getId() +"</credentialsId>")
+          def xmlStream = new ByteArrayInputStream( configXml.getBytes() )
+          instance.createProjectFromXML(jobName, xmlStream)
+        }
+      }
+

@@ -1,0 +1,28 @@
+---
+# file: roles/userlist/tasks/main.yml
+
+- name: "ユーザーグループの作成 {{ item.group_name }}"
+  group:
+    name: "{{ item.group_name }}"
+    gid: "{{ item.group_id }}"
+  with_items:
+    - "{{ user_groups }}"
+
+- name: "ユーザーの作成 {{ item.user_name }}"
+  user:
+    name: '{{ item.user_name }}'
+    uid: '{{ item.user_id }}'
+    group: '{{ item.group_name }}'
+    shell: /bin/bash
+    generate_ssh_key: yes
+  with_items:
+    - '{{ users }}'
+
+- name: "sudoers に追加 {{ item.user_name }}"
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: "^{{ item.user_name }}"
+    line: "{{ item.user_name }} ALL=(ALL) NOPASSWD: ALL"
+  with_items:
+    - '{{ users }}'

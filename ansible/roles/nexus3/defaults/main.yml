@@ -1,0 +1,25 @@
+---
+# vars file for docker
+
+nexus_dir: "{{ '/opt/' + lookup('env', 'PROJECT_GROUP') + '/nexus' }}"
+
+ci_network_name: "{{ lookup('env', 'PROJECT_GROUP') + '_network' }}"
+
+nexus_external_host: "{{ lookup('env', 'NEXUS_HOST') }}"
+nexus_external_port: "{{ lookup('env', 'NEXUS_PORT') }}"
+nexus_external_url: "http://{{ nexus_external_host }}:{{ nexus_external_port }}"
+
+nexus_docker_name: nexus
+nexus_docker_port: 8081
+nexus_docker_url: "http://{{ nexus_docker_name }}:{{ nexus_docker_port }}"
+
+nexus_server_id: "{{ lookup('env', 'PROJECT_NAME') + '-nexus' }}"
+nexus_releases_repository: "{{ lookup('env', 'PROJECT_NAME') + '-releases' }}"
+nexus_snapshots_repository: "{{ lookup('env', 'PROJECT_NAME') + '-snapshots' }}"
+nexus_group_repository: "{{ lookup('env', 'PROJECT_NAME') + '-public' }}"
+
+nexus_admin: admin
+nexus_admin_password: admin123
+nexus_deployment_user: deployment
+nexus_deployment_password: deployment123
+nexus_deployment_email: "{{ lookup('env', 'NEXUS_DEPLOYMENT_EMAIL') }}"

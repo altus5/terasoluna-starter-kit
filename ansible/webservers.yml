@@ -1,0 +1,7 @@
+# file: docker-aws
+- hosts: webservers
+  become: yes
+  roles:
+    - userlist
+    - { role: docker, dockerhost_user: wasabi }
+    - common

@@ -1,0 +1,9 @@
+---
+inventory: local
+
+build_user: 'wasabi'
+
+users:
+  - {user_name: 'wasabi', user_id: 5001, group_name: 'wasabi'}
+user_groups:
+  - {group_name: 'wasabi', group_id: 5001}

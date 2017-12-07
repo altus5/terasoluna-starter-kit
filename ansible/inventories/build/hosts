@@ -1,0 +1,4 @@
+[nexus-servers]
+nexus.local
+[jenkins-servers]
+jenkins.local

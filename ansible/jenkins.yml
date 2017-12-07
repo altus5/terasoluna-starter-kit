@@ -1,0 +1,8 @@
+# file: jenkins
+- hosts: jenkins-servers
+  become: yes
+  roles:
+    - userlist
+    - { role: docker, dockerhost_user: "{{ build_user }}" }
+    - buildtools
+    - jenkins

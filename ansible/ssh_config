@@ -1,0 +1,23 @@
+Host nexus.local
+  User ansible
+  HostName nexus.local
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  
+Host jenkins.local
+  User ansible
+  HostName jenkins.local
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+
+Host staging.local
+  User ansible
+  HostName staging.local
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+
+Host production-server
+  User ansible
+  HostName 192.168.0.1
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null

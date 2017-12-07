@@ -1,0 +1,97 @@
+# encoding: utf-8
+
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.define "controller" do |node|
+    node.ssh.forward_agent = true
+    node.vm.box = "centos/7"
+    node.vm.hostname = "controller"
+    node.vm.network :private_network, ip: "192.168.120.10"
+    node.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+    node.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--memory", 512]
+      # VPNを使っている場合などは、ホストOSのDNSを使うようにする
+      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    end
+    node.vm.provision :shell, :inline => <<-EOT
+      # Ansibleのインストール
+      yum -y install ansible
+    EOT
+  end
+  config.vm.define "build-server" do |node|
+    node.ssh.forward_agent = true
+    node.vm.box = "centos/7"
+    node.vm.hostname = "build"
+    node.vm.network :private_network, ip: "192.168.120.11"
+    node.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+    node.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--memory", 1024]
+      # VPNを使っている場合などは、ホストOSのDNSを使うようにする
+      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    end
+    node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/tmp/controller.pub"
+    node.vm.provision :shell, :inline => <<-EOT
+      # Ansibleのインストール
+      yum -y install ansible
+
+      # ansibleユーザーを作成
+      sudo useradd ansible
+      # sudoers に追加
+      echo "ansible ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+      # コントローラーの公開キーを登録する
+      ansible_ssh=/home/ansible/.ssh
+      mkdir $ansible_ssh
+      chmod 700 $ansible_ssh
+      cat /tmp/controller.pub > $ansible_ssh/authorized_keys
+      rm /tmp/controller.pub
+      chmod 600 $ansible_ssh/authorized_keys
+      chown -R ansible:ansible $ansible_ssh
+      # このboxのamazon linuxは、なぜか、sshログイン時のDNS参照が遅いので、OFFにする
+      #sed -i -e 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
+      #service sshd restart
+    EOT
+  end
+  config.vm.define "staging" do |node|
+    node.ssh.forward_agent = true
+    node.vm.box = "mvbcoding/awslinux"
+    node.vm.hostname = "staging"
+    node.vm.network :private_network, ip: "192.168.120.12"
+    node.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+    node.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--memory", 512]
+      # VPNを使っている場合などは、ホストOSのDNSを使うようにする
+      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    end
+    node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/tmp/controller.pub"
+    node.vm.provision :shell, :inline => <<-EOT
+      # swap領域を作成
+      dd if=/dev/zero of=/swap bs=1M count=2048
+      chmod 600 /swap
+      mkswap /swap
+      swapon /swap
+
+      # Ansibleのインストール
+      yum install -y libffi-devel openssl-devel
+      pip install --upgrade setuptools
+      pip install cffi
+      pip install ansible
+
+      # ansibleユーザーを作成
+      sudo useradd ansible
+      # sudoers に追加
+      echo "ansible ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+      # コントローラーの公開キーを登録する
+      ansible_ssh=/home/ansible/.ssh
+      mkdir $ansible_ssh
+      chmod 700 $ansible_ssh
+      cat /tmp/controller.pub > $ansible_ssh/authorized_keys
+      rm /tmp/controller.pub
+      chmod 600 $ansible_ssh/authorized_keys
+      chown -R ansible:ansible $ansible_ssh
+      # このboxのamazon linuxは、なぜか、sshログイン時のDNS参照が遅いので、OFFにする
+      sed -i -e 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
+      service sshd restart
+    EOT
+  end
+end

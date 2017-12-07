@@ -1,0 +1,28 @@
+---
+# file: roles/webapp-deploy/tasks/main.yml
+
+- name: "配置先ディレクトリーの作成"
+  become: true
+  file: path={{ item.path }} owner={{ item.owner }} group={{ item.group }} mode=0{{ item.mode }} state=directory
+  with_items:
+    - {"path":"{{ webapp_dest_dir }}/app", "owner":"wasabi", "group":"wasabi", "mode":"755"}
+    - {"path":"{{ webapp_dest_dir }}/logs", "owner":"wasabi", "group":"wasabi", "mode":"755"}
+
+- name: "docker-compose.ymlが既にあるか確認"
+  stat: path={{ webapp_dest_dir }}/app/docker-compose.yml
+  register: dcyml
+
+- name: "docker-composeを停止"
+  docker_service:
+    project_src: "{{ webapp_dest_dir }}/app"
+    state: absent
+  when: dcyml.stat.exists
+
+- name: "アプリのデプロイ"
+  synchronize: src={{ webapp_src_dir }}/ dest={{ webapp_dest_dir }}/app/ use_ssh_args=yes
+
+- name: "docker-composeを開始"
+  docker_service:
+    project_src: "{{ webapp_dest_dir }}/app"
+    state: present
+
