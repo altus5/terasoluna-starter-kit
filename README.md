@@ -1,13 +1,67 @@
 # TERASOLUNA Starter Kit
 
 TERASOLUNAの開発環境を30分で作成するスターターキットです。  
-このキットで、開発チームに配布する開発キットと、CI環境の構築を行うことができます。  
+このキットは、開発チームに配布する開発キットと、CI環境の構築を、bashスクリプトで自動的に作成します。  
 
 例えば、開発チームのリーダーが、TERASOLUNAの開発プロジェクトの立ち上げに際して、
 社内に、プロジェクト専用のCIサーバーを構築して、さらに、チーム内のメンバーに、
-開発環境を配布するようなシナリオを想定しています。
+開発キットを配布するようなシナリオを想定しています。
 
-配布される開発環境としてコミットされているソースコードは、TERASOLUNAのブランクプロジェクトです。
+配布される開発キットとしてコミットされているソースコードは、TERASOLUNAのブランクプロジェクトです。
+
+## 構築されるイメージ
+
+スターターキットで構築されるものは、以下のようなものです。
+
+### CI環境
+
+CI用のサーバーに、JenkinsとNexusが、以下のように配置されます。  
+複数のプロジェクトをポートを変えて、同居させることも可能です。  
+また、両方ともDockerコンテナで実行されるので、サーバー内で、他にもミドルウェアが動いていたとしても、影響なくインストールできます。
+
+```
+/opt
+├── {projectA}
+│   ├── nexus
+│   ├── jenkins
+```
+
+### 開発キット
+
+開発メンバーのローカルPCに展開される開発キットは、以下のように構成されます。
+
+```
+{development_kit}
+├── eclipse
+├── java
+├── tomcat
+├── maven
+├── {project}
+│   ├── {project}-domain
+│   ├── {project}-env
+│   ├── {project}-initdb
+│   ├── {project}-selenium
+│   ├── {project}-web
+│   ├── pom.xml
+├── workspace
+├── eclipse.bat
+├── eclipse-clean.bat
+├── Vagrantfile
+```
+
+eclipse、java、tomcat、mavenはダウンロードされ展開されます。主に[Pleiades](http://mergedoc.osdn.jp/)にパッケージされているものになります。  
+{project}配下は、TERASOLUNAのマルチプロジェクト構成のブランクプロジェクトです。  
+eclipse.batは、eclipseを起動するためのもので、次のようになっています。   
+```
+set BASE_DIR=%cd%
+set JAVA_HOME=%BASE_DIR%\java\8
+set PATH=%JAVA_HOME%\bin;%PATH%
+set M2_HOME=%BASE_DIR%\maven
+set PATH=%M2_HOME%\bin;%PATH%
+cd %BASE_DIR%\eclipse
+start eclipse.exe %1
+```
+複数の開発プロジェクトを抱えていると、システムの環境変数に設定したくない場合があるので、起動時に設定する方式です。
 
 ## 前提条件
 
@@ -131,7 +185,7 @@ pip install ansible
 echo "ansible ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 ```
 
-## プロジェクトの構成情報
+## プロジェクトの構成情報を設定する
 
 ローカルPCで、本リポジトリを clone してください。
 ```
@@ -151,7 +205,7 @@ cp .env.example.sh .env.sh
 ##・・・.env.shを編集・・・
 ```
 
-## CI環境の構築
+## CI環境を構築する
 
 TERASOLUNAのブランクプロジェクトを作成するには、Mavenが動くことと、且つ、その時点で、Nexusも設置されていた方が効率がよいので、最初に、CI環境を作成します。
 
@@ -161,7 +215,7 @@ TERASOLUNAのブランクプロジェクトを作成するには、Mavenが動�
 ```
 このスクリプトでは、ansibleを実行するために、VirtualBoxとVagrantのインストールも行います。ansibleは、VMの中から実行されます。
 
-## 開発チームに配布する開発キットを作成する
+## 開発キットを作成する
 
 ```
 # 開発メンバーに配布する開発キットを作成
@@ -172,7 +226,7 @@ Gitlabにブランクプロジェクトもプッシュされます。
 開発リーダーの方が、ここまでの作業を行うと、`./development-kit` というディレクトリが作成されて、ここに、チームに配布する開発キットと同じものが作成された状態になります。  
 リーダーは、このディレクトリをそのまま使って、開発を進めて問題ありません。
 
-## 開発チームへの展開
+## 開発チームにキットを展開する
 
 開発チームのメンバーに、開発環境構築手順を案内して、各自のPCに環境を作成してもらいます。
 構築手順も、開発キットのREADMEとしてコミットされているので、リポジトリURLの案内だけで、進められます。
