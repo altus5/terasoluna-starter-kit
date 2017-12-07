@@ -50,7 +50,7 @@ cat ~/.ssh/id_rsa.pub
 ```
 公開キーをGitlabに登録するために、メモしておきます。
 
-開発環境として、VirtualBox+Vagrantを使います。ローカルPC（ホストOS）VMとは、ssh-agent を使って、同じsshキーを使います。
+開発環境として、VirtualBox+Vagrantを使います。ローカルPC（ホストOS）とVMとは、ssh-agent を使って、同じsshキーを使います。
 Git Bash起動毎に、ssh-agentが実行されるように、以下を実行して、.bash_profile に追加してください。
 ```
 cat << _EOF_ >> ~/.bash_profile
@@ -133,7 +133,7 @@ echo "ansible ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 ## プロジェクトの構成情報
 
-まずは、本リポジトリを clone してください。
+ローカルPCで、本リポジトリを clone してください。
 ```
 # スターターキットをclone
 git clone git@github.com:altus5/terasoluna-starter-kit.git
@@ -169,7 +169,8 @@ TERASOLUNAのブランクプロジェクトを作成するには、Mavenが動�
 ```
 Gitlabにブランクプロジェクトもプッシュされます。
 
-開発リーダーの方が、ここまでの作業を行うと、`./development-kit` というディレクトリが作成されて、ここに、チームに配布する開発キットと同じものが作成された状態になります。
+開発リーダーの方が、ここまでの作業を行うと、`./development-kit` というディレクトリが作成されて、ここに、チームに配布する開発キットと同じものが作成された状態になります。  
+リーダーは、このディレクトリをそのまま使って、開発を進めて問題ありません。
 
 ## 開発チームへの展開
 
