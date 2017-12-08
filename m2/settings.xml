@@ -3,7 +3,7 @@
 
   <servers>
     <server>
-     <id>taresoluna-nexus</id>
+     <id>{{ PROJECT_NAME }}-nexus</id>
      <username>deployment</username>
      <password>deployment123</password>
     </server>
@@ -11,19 +11,19 @@
   
   <mirrors>
     <mirror>
-      <id>taresoluna-nexus</id>
+      <id>{{ PROJECT_NAME }}-nexus</id>
       <mirrorOf>*</mirrorOf>
       <url>http://{{ NEXUS_HOST }}:{{ NEXUS_PORT }}/repository/{{ PROJECT_NAME }}-public/</url>
     </mirror>
   </mirrors>
 
   <activeProfiles>
-    <activeProfile>taresoluna-nexus</activeProfile>
+    <activeProfile>{{ PROJECT_NAME }}-nexus</activeProfile>
   </activeProfiles>
 
   <profiles>
     <profile>
-      <id>taresoluna-nexus</id>
+      <id>{{ PROJECT_NAME }}-nexus</id>
       <repositories>
         <repository>
           <id>central</id>

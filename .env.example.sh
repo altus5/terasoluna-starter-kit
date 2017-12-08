@@ -2,9 +2,9 @@
 export GITLAB_URL=https://gitlab.local
 # リポジトリオーナーの Private Token
 export GITLAB_PRIVATE_TOKEN=XxxxxXXXssss
-# リポジトリのグループ名
-export PROJECT_GROUP=myproject
-# リポジトリのプロジェクト名
+# リポジトリのグループ名 ex) https://gitlab.local/mygroup/example-project
+export PROJECT_GROUP=mygroup
+# プロジェクトのリポジトリ名 ex) https://gitlab.local/mygroup/example-project
 export PROJECT_NAME=example-crm
 # pom.xmlのgroupId
 export POM_GROUP_ID=jp.example
@@ -12,6 +12,8 @@ export POM_GROUP_ID=jp.example
 export TERASOLUNA_ARTIFACT_ID=mybatis3
 # TERASOLUNAのバージョン
 export TERASOLUNA_VERSION=5.3.1.RELEASE
+# 開発キット名（リポジトリ名） ex) https://gitlab.local/mygroup/development-kit
+export DEVELOPMENT_KIT_NAME=development-kit
 
 # 開発ツールのダウンロード元(社内のファイルサーバーに保存してある場合など)
 #export INTERNAL_FILE_SERVER_URL=file:///Users/hoge/projects/download

@@ -13,8 +13,6 @@ if [ ! -e .env.sh ]; then
 fi
 . .env.sh
 
-DEVELOPMENT_KIT_NAME=${DEVELOPMENT_KIT_NAME:-development-kit}
-
 # gitlabを操作する関数を取り込む
 . ./scripts/lib-gitlab.sh
 
