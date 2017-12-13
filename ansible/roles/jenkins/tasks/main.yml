@@ -1,6 +1,9 @@
 ---
 # file: roles/jenkins/tasks/main.yml
 
+- fail: msg="git_remote_repository が不明です。環境変数 PROJECT_REPO_URL にリポジトリのURLを設定してから実行してください。"
+  when: git_remote_repository is not defined or git_remote_repository == ''
+
 - name: "jenkins配置ディレクトリを作成"
   become: true
   file: path={{ _jks_dir.path }} owner={{ build_user }} state=directory mode="a+wr"

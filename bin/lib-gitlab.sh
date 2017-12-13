@@ -118,3 +118,5 @@ _gitlab_clone() {
   popd
 }
 
+export DEVELOPMENT_KIT_REPO_URL=$(_gitlab_repository_url $DEVELOPMENT_KIT_NAME)
+export PROJECT_REPO_URL=$(_gitlab_repository_url $PROJECT_NAME)

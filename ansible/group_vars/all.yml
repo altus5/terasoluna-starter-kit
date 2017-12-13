@@ -1,6 +1,6 @@
 ---
 
-git_remote_repository: git@gitlab.altus-five.com:wasabi/meq.git
-project_code_name: wasabi
-project_group_id: jp.co.future_vision
-project_artifact_id: meq
+git_remote_repository: "{{ lookup('env', 'PROJECT_REPO_URL') }}"
+project_code_name: "{{ lookup('env', 'PROJECT_GROUP') }}"
+project_group_id: "{{ lookup('env', 'POM_GROUP_ID') }}"
+project_artifact_id: "{{ lookup('env', 'PROJECT_NAME') }}"

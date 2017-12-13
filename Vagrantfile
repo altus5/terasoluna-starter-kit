@@ -22,15 +22,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # Ansibleのインストール
       yum -y install ansible
       
-      # .env.shを読み込む
-      . /vagrant/.env.sh
+      # プロジェクト構成を読み込む
+      . /vagrant/bin/config.sh
 
       # ホストを登録
       echo "$NEXUS_HOST nexus.local" >> /etc/hosts
       echo "$JENKINS_HOST jenkins.local" >> /etc/hosts
 
-      # .bash_profileに.env.shの読み込みを登録
-      echo '. /vagrant/.env.sh' >> /home/vagrant/.bash_profile
+      # .bash_profileにプロジェクト構成を読み込むように登録
+      echo '. /vagrant/bin/config.sh' >> /home/vagrant/.bash_profile
     EOT
   end
 
