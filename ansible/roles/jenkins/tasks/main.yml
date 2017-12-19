@@ -20,6 +20,8 @@
     owner: "{{ build_user }}"
     mode: "a+wr"
 
+- file: path=/var/run/docker.sock mode="o+wr"
+
 - name: Create a network
   docker_network:
     name: "{{ ci_network_name }}"
