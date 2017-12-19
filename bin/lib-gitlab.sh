@@ -18,12 +18,13 @@ EOF
 _gitlab_create_group() {
   [ "$PROJECT_GROUP" = "" ] && _usage_env PROJECT_GROUP
   [ "$GITLAB_PRIVATE_TOKEN" = "" ] && _usage_env GITLAB_PRIVATE_TOKEN
-  exists=$(
+  response=$(
     curl -sSL --request GET \
       --header "PRIVATE-TOKEN: $GITLAB_PRIVATE_TOKEN" \
       "$GITLAB_URL/api/v3/groups?search=$PROJECT_GROUP" \
-      | grep $PROJECT_GROUP | wc -l
+      | sed -e 's/\}/}\n/'
   )
+  exists=$(echo "$response" | grep "\"$PROJECT_GROUP\"" | wc -l)
   if [ "$exists" = "0" ]; then
     echo "create gitlab group ..."
     curl -sSL --request POST \
@@ -37,6 +38,8 @@ _gitlab_create_group() {
     curl -sSL --request GET \
       --header "PRIVATE-TOKEN: $GITLAB_PRIVATE_TOKEN" \
       "$GITLAB_URL/api/v3/groups?search=$PROJECT_GROUP" \
+      | sed -e 's/\}/}\n/' \
+      | grep "\"$PROJECT_GROUP\"" \
       | sed -e 's/.*"id":\([0-9]\+\).*/\1/'
   )
 }
@@ -49,12 +52,12 @@ _create_gitlab_project() {
   [ "$GITLAB_PRIVATE_TOKEN" = "" ] && _usage_env GITLAB_PRIVATE_TOKEN
   [ "$PROJECT_GROUP_ID" = "" ] && _usage_env PROJECT_GROUP_ID
   _project_name=$1
-  exists=$(
+  response=$(
     curl -sSL --request GET \
       --header "PRIVATE-TOKEN: $GITLAB_PRIVATE_TOKEN" \
-      $GITLAB_URL/api/v3/projects/$(_url_encode $PROJECT_GROUP/$_project_name) \
-      | grep $PROJECT_GROUP/$_project_name | wc -l
+      $GITLAB_URL/api/v3/projects/$(_url_encode $PROJECT_GROUP/$_project_name)
   )
+  exists=$(echo "$response" | grep "\"$PROJECT_GROUP/$_project_name\"" | wc -l)
   if [ "$exists" = "0" ]; then
     echo "create gitlab project ..."
     curl -sSL --request POST \
