@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    tools {
+        maven 'MAVEN3' 
+    }
+    stages {
+        stage ('Initialize') {
+            steps {
+                sh '''
+                    echo "PATH = ${PATH}"
+                    echo "M2_HOME = ${M2_HOME}"
+                    env
+                ''' 
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn -DskipTests=true -Dmaven.test.failure.ignore=true -P warpack clean install'
+                sh 'mvn -pl {{ PROJECT_NAME }}-env -P local clean install'
+                sh 'mvn -pl {{ PROJECT_NAME }}-env -P test-server clean install'
+                sh 'mvn -pl {{ PROJECT_NAME }}-env -P production-server clean install'
+            }
+        }
+        stage('Test') { 
+            steps {
+                sh 'mvn test -P warpack clean install' 
+            }
+            post {
+                always {
+                  junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Deploy - Nexus') {
+            when {
+                expression { BRANCH_NAME ==~ /(master|develop)/ }
+            }
+            steps {
+                sh 'mvn -DskipTests=true -P warpack deploy'
+                sh 'mvn -pl {{ PROJECT_NAME }}-env -P local deploy'
+                sh 'mvn -pl {{ PROJECT_NAME }}-env -P test-server deploy'
+                sh 'mvn -pl {{ PROJECT_NAME }}-env -P production-server deploy'
+            }
+        }
+    }
+}
